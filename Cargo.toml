@@ -1,0 +1,4 @@
+[workspace]
+resolver = "2"
+
+members = ["rust-try-catch", "rust-try-catch-macros"]
