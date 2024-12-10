@@ -2,6 +2,11 @@
 name = "rust-try-catch-macros"
 version = "0.1.0"
 edition = "2021"
+description = "try catch proc macros"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/Vrtgs/rust-try-catch"
+
+keywords = ["try", "catch", "try-catch", "hell", "nightmare"]
 
 [lib]
 proc-macro = true
