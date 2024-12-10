@@ -5,6 +5,10 @@ edition = "2021"
 license = "MIT OR Apache-2.0"
 authors = ["Vrtgs"]
 readme = "../README.md"
+description = "Rust Try Catch - Reinventing the nightmare!"
+repository = "https://github.com/Vrtgs/rust-try-catch"
+documentation = "https://docs.rs/rust-try-catch"
+
 
 keywords = ["try", "catch", "try-catch", "hell", "nightmare"]
 
