@@ -1,6 +1,6 @@
 #![deny(missing_docs)]
 
-#![doc = include_str!("../README.md")]
+#![doc = include_str!("../../README.md")]
 
 use std::any::Any;
 use std::backtrace::Backtrace;
@@ -38,12 +38,12 @@ compile_error!("Try catch only works when panic = \"unwind\"");
 /// - **catch exception block** (optional): A generic handler for exceptions not caught by specific `catch` blocks.
 /// - **catch panic block** (optional): Handle non-exception panics.
 /// - **finally block** (optional): Executes unconditionally after the `try` block and any `catch` blocks.
-/// 
+///
 /// ## Notes
 ///  - at least 2 blocks have to be defined you cannot have a bare try {} expression
 ///  - the try and catch blocks should both return the same type
 ///  - the finally block should return () aka "unit"
-/// 
+///
 /// # Features
 ///
 /// - Matches exceptions based on type.
@@ -78,7 +78,7 @@ compile_error!("Try catch only works when panic = \"unwind\"");
 /// # fn another_function() {
 /// #     rust_try_catch::throw("Haha I failed");
 /// # }
-/// 
+///
 /// let result = rust_try_catch::try_catch! {
 ///     try {
 ///         // Code that might throw.
@@ -127,7 +127,7 @@ compile_error!("Try catch only works when panic = \"unwind\"");
 /// # #[derive(Debug)]
 /// # struct SpecificError;
 /// # let risky_operation = || rust_try_catch::throw(SpecificError);
-/// 
+///
 /// let result = rust_try_catch::try_catch! {
 ///     try {
 ///         // Code execution.
@@ -155,7 +155,7 @@ compile_error!("Try catch only works when panic = \"unwind\"");
 /// - Unhandled exceptions or panics will propagate out of the macro.
 ///
 /// # Examples
-/// 
+///
 /// ## No exception or panic (doesn't compile)
 /// ```compile_fail
 /// let result = rust_try_catch::try_catch! {
@@ -169,7 +169,7 @@ compile_error!("Try catch only works when panic = \"unwind\"");
 /// ## Exception without panic
 /// ```
 /// # use rust_try_catch::throw;
-/// 
+///
 /// let result = rust_try_catch::try_catch! {
 ///     try {
 ///         throw("An error occurred");
@@ -216,25 +216,25 @@ macro_rules! try_catch {
                 $({$catch_panic_exception_name})?
                 $({$($finally_body)*})?
             );
-            
+
             if count < 2 {
                 ::core::panic!("Using try {{ /*code*/ }} is equivalent to a no-op")
             }
         }
-        
+
         struct FinallyDo<F: ::core::ops::FnOnce() -> ()>(::core::mem::ManuallyDrop<F>);
         impl<F: ::core::ops::FnOnce()> Drop for FinallyDo<F> {
             fn drop(&mut self) {
                 (unsafe { ::core::mem::ManuallyDrop::take(&mut self.0) })()
             }
         }
-        
+
         $(let _finally_guard = FinallyDo(::core::mem::ManuallyDrop::new(|| {
             $($finally_body)*
         }));)?
-        
-        let fun = ::std::panic::AssertUnwindSafe(|| { $($try_body)* }); 
-        let val = match ::std::panic::catch_unwind(fun) { 
+
+        let fun = ::std::panic::AssertUnwindSafe(|| { $($try_body)* });
+        let val = match ::std::panic::catch_unwind(fun) {
             Ok(res) => res,
             Err(panic_payload) => 'ret_from_err: {
                 let mut exception = match panic_payload.downcast::<$crate::Thrown>() {
@@ -248,12 +248,12 @@ macro_rules! try_catch {
                         ::std::panic::resume_unwind(normal_panic)
                     }
                 };
-                
+
                 $(
                     match exception.source.downcast::<$exception_ty>() {
                         Ok(box_error) => {
                             let $exception_name: $exception_ty = *box_error;
-                            
+
                             break 'ret_from_err ({
                                $($catch_body)*
                             })
@@ -261,23 +261,23 @@ macro_rules! try_catch {
                         Err(other_error) => exception.source = other_error,
                     }
                 )*
-                
+
                 $({
                     let $catch_all_exception_name = exception.source;
                     break 'ret_from_err ({$($catch_all_exception_body)*})
                 })?
-                
+
                 #[allow(unreachable_code)]
                 ::std::panic::resume_unwind(exception)
             }
         };
-        
+
         val
     }};
 }
 
 /// Unwraps a result or propagates its error as an exception.
-/// 
+///
 /// tri! matches the given Result.
 /// In case of the Ok variant, the expression has the value of the wrapped value.
 /// In case of the Err variant, it retrieves the inner error, and calls throw on it.
@@ -303,7 +303,7 @@ pub struct Thrown {
 /// for proper usage users must ensure that there is a function annotated with `rust_try_catch::throw_guard`
 /// up in the call chain
 pub fn throw<T: Any + Send + 'static>(x: T) -> ! {
-    std::panic::resume_unwind(Box::new(Thrown { 
+    std::panic::resume_unwind(Box::new(Thrown {
         source: Box::new(x),
         type_name: std::any::type_name::<T>(),
         backtrace: Backtrace::force_capture()
@@ -313,7 +313,7 @@ pub fn throw<T: Any + Send + 'static>(x: T) -> ! {
 /// # Description
 /// wraps a function or closure, to prevent a thrown exception from propagating beyond them
 /// and turns unhandled exceptions to a panic
-/// 
+///
 /// # Note
 /// thrown exceptions do not trigger the panic hook so if this isn't in the call chain before some code
 /// throws, the process might exit abruptly due to a panic with an unspecified load
