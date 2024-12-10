@@ -13,4 +13,4 @@ documentation = "https://docs.rs/rust-try-catch"
 keywords = ["try", "catch", "try-catch", "hell", "nightmare"]
 
 [dependencies]
-rust-try-catch-macros = { version = "*", path = "../rust-try-catch-macros" }
+rust-try-catch-macros = { version = "0.1.0", path = "../rust-try-catch-macros" }

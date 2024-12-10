@@ -1,6 +1,6 @@
 #![deny(missing_docs)]
 
-#![doc = include_str!("/README.md")]
+#![doc = include_str!("../README.md")]
 
 use std::any::Any;
 use std::backtrace::Backtrace;
