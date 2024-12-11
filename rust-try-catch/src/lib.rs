@@ -341,9 +341,9 @@ pub fn __throw_driver<T>(main: impl FnOnce() -> T) -> T {
         // Safety: inner runs `f` at most once
         unsafe {
             let main_fn = main.take().unwrap_unchecked();
-            // help skip destructor call
-            std::hint::assert_unchecked(output.is_none());
-            output = Some(main_fn())
+            // since output = None
+            // this helps skip destructor call
+            std::ptr::write(&mut output, Some(main_fn()))
         }
     });
 
