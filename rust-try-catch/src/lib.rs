@@ -10,11 +10,12 @@ use std::panic::AssertUnwindSafe;
 compile_error!("Try catch only works when panic = \"unwind\"");
 
 /// A flexible `try_catch` macro that provides structured error and panic handling
-/// with an optional `finally` block for cleanup.
+/// with an optional `else` block and `finally` block for cleanup.
 ///
 /// # Description
 /// The `try_catch!` macro allows you to define a `try` block for executing code, followed by multiple `catch`
-/// blocks for handling exceptions or panics. Additionally, a `finally` block can be specified for cleanup actions.
+/// blocks for handling exceptions or panics. Additionally, an `else` block runs if the `try` finishes normally,
+/// and a `finally` block can be specified for cleanup actions.
 ///
 /// # Syntax
 /// ```text
@@ -27,6 +28,8 @@ compile_error!("Try catch only works when panic = \"unwind\"");
 ///         <catch_all_block>
 ///     } catch panic (<panic_pattern>) {
 ///         <catch_panic_block>
+///     } else (<try_result_pattern>) {
+///         <else_block>
 ///     } finally {
 ///         <finally_block>
 ///     }
@@ -37,11 +40,13 @@ compile_error!("Try catch only works when panic = \"unwind\"");
 /// - **catch blocks**: Handle exceptions matching specific types.
 /// - **catch exception block** (optional): A generic handler for exceptions not caught by specific `catch` blocks.
 /// - **catch panic block** (optional): Handle non-exception panics.
-/// - **finally block** (optional): Executes unconditionally after the `try` block and any `catch` blocks.
+/// - **else block** (optional): Executes if the `try` block finishes normally.
+/// - **finally block** (optional): Executes unconditionally after the `try` block and any `catch` and/or `else` blocks.
 ///
 /// ## Notes
 ///  - at least 2 blocks have to be defined you cannot have a bare try {} expression
-///  - the try and catch blocks should both return the same type
+///  - the try block (or else block if there is one) should have the same type as all of the catch blocks
+///  - an else block is only allowed if there is at least one catch block
 ///  - the finally block should return () aka "unit"
 ///
 /// # Features
@@ -105,6 +110,21 @@ compile_error!("Try catch only works when panic = \"unwind\"");
 ///     }
 /// };
 /// assert_eq!(result, -101);
+/// ```
+///
+/// ## Using an else block
+/// ```
+/// let result = rust_try_catch::try_catch! {
+///     try {
+///         42
+///     } catch panic (e) {
+///         println!("Caught a panic: {:?}", e);
+///         None
+///     } else (try_result) {
+///         Some(try_result)
+///     }
+/// };
+/// assert_eq!(result, Some(42));
 /// ```
 ///
 /// ## Using a finally block
@@ -204,6 +224,8 @@ macro_rules! try_catch {
             $($catch_all_exception_body: tt)*
         })? $(catch panic ($catch_panic_exception_name: pat) {
             $($catch_panic_exception_body: tt)*
+        })? $(else $(($try_result_name: pat))? {
+            $($else_body: tt)*
         })? $(finally {
             $($finally_body: tt)*
         })?
@@ -214,11 +236,26 @@ macro_rules! try_catch {
                 $({$exception_name})*
                 $({$catch_all_exception_name})?
                 $({$catch_panic_exception_name})?
+                $({$($else_body)*})?
                 $({$($finally_body)*})?
             );
 
             if count < 2 {
                 ::core::panic!("Using try {{ /*code*/ }} is equivalent to a no-op")
+            }
+
+            let except_count = $crate::__count_blocks!(
+                $({$exception_name})*
+                $({$catch_all_exception_name})?
+                $({$catch_panic_exception_name})?
+            );
+
+            let else_count = $crate::__count_blocks!(
+                $({$($else_body)*})?
+            );
+
+            if except_count == 0 && else_count != 0 {
+                ::core::panic!("With no except statements, an else block can just be moved to the end of the corresponding try block")
             }
         }
 
@@ -235,7 +272,13 @@ macro_rules! try_catch {
 
         let fun = ::std::panic::AssertUnwindSafe(|| { $($try_body)* });
         let val = match ::std::panic::catch_unwind(fun) {
-            Ok(res) => res,
+            Ok(res) => {
+                $(let res = {
+                    $(let $try_result_name = res;)?
+                    $($else_body)*
+                };)?
+                res
+            }
             Err(panic_payload) => 'ret_from_err: {
                 let mut exception = match panic_payload.downcast::<$crate::Thrown>() {
                     Ok(box_thrown) => box_thrown,
