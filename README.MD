@@ -10,6 +10,7 @@ Why settle for *Result* and *Option* when you can spice up your life with panics
 - **Bring Back `throw` and `catch`**: Just when you thought the only `throw`ing and `catch`ing you do was in your high-schools baseball team, we decided to give it a whole new purpose: nightmares.
 - **Panic Recovery**: Because catching panics makes more sense than fixing your code, right?
 - **Generic Exception Handling**: Catch `anything`. Who needs type safety when you can have mystery bugs?
+- **Else Blocks**: Pretend you're writing Python.
 - **Finally Blocks**: Clean up after your disasters. Or don’t. We don’t judge.
 - **Readability? Nope.** It’s not a bug; it’s a *feature*. Embrace spaghetti syntax and callback hell in a language that fought so hard to avoid it.
 
@@ -59,7 +60,7 @@ rust-try-catch = "0.1.0" # Or whatever version the world has suffered through.
 
 ## `try_catch!` Macro
 At its core, `try_catch!` is a macro designed to take Rust's Result-based error handling
-and replace it with a beautifully convoluted system of try, catch, finally, and questionable life choices.
+and replace it with a beautifully convoluted system of try, catch, else, finally, and questionable life choices.
 
 ### Syntax
 ```text
@@ -72,6 +73,8 @@ try_catch! {
         // Catch all other exceptions not previously caught.
     } catch panic (panic_info) {
         // For when you're feeling nostalgic about debugging segfaults.
+    } else (res) {
+        // Hooray! Nothing bad happened (yet).
     } finally {
         // Clean up whatever mess you've created.
     }
@@ -83,6 +86,7 @@ try_catch! {
 - `catch (exception => Type)`: Specifically handles exceptions of type Type. Use this for precise error matching.
 - `catch exception (name)`: A catch-all for any exceptions that aren't caught by specific type matches. It's like the last line of defense.
 - `catch panic (panic_info)`: Handles panics (because, why not?).
+- `else`: Runs if the try block finished normally, but before the finally block.
 - `finally`: Ensures some cleanup happens, even if all else fails.
 
 ### Example (You Asked for It)
@@ -200,6 +204,9 @@ let result = try_catch! {
     } catch panic (info) {
         println!("Caught a panic: {:?}", info);
         -1
+    } else {
+        println!("Didn't catch anything but a cold.");
+        100
     } finally {
         println!("Because even bad code needs cleanup.");
     }
